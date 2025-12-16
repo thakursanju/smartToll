@@ -1,73 +1,218 @@
-# Welcome to your Lovable project
+# 🚗 smallToll
 
-## Project info
+### A Decentralized, Privacy-Preserving Toll Payment System
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+Built for **Ethereum-based Hackathon Track**
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 📖 Introduction
 
-**Use Lovable**
+**smallTolldecentralized toll payment protocol that leverages **Ethereum smart contracts**, **gas abstraction**, and **privacy-preserving authentication** to modernize toll collection systems.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Traditional toll systems suffer from fraud, privacy leaks, payment disputes, and infrastructure downtime. FlowPasssmallTolllized toll servers with **on-chain logic**, enabling **secure, verifiable, and anonymous toll payments** using vehicle-linked wallets.
 
-Changes made via Lovable will be committed automatically to this repo.
+> ⚡ No cash. No queues. No trust required.
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🎯 The Vision
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+Road infrastructure should be **fast, fair, and frictionless**.
 
-Follow these steps:
+FlowPass envisiosmallTolle:
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+* Toll payments are **automatic and tamper-proof**
+* Users retain **full privacy** over their identity and travel history
+* Operators get **instant settlement and dispute-proof records**
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+By combining Ethereum’s immutable ledger with modern mobile hardware, FlowPass turns toll plazsmallTolless payment checkpoints**.
 
-# Step 3: Install the necessary dependencies.
-npm i
+---
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+## 🔄 User Flow
+
+### 1️⃣ User Onboarding
+
+* User accesses the FlowPass web app (mobile-first)
+  smallTollanonymously (Anon-Aadhaar / ZK-based auth)
+* A **vehicle wallet** is created on Ethereum
+
+### 2️⃣ Wallet Funding
+
+* User tops up the vehicle wallet (ETH / ERC20)
+* **CDP Paymaster** abstracts gas fees (no ETH required by user)
+
+### 3️⃣ Toll Entry & Payment
+
+* Vehicle arrives at toll plaza
+* Toll operator scans vehicle RFID using a **phone-hosted web app**
+* Smart contract is triggered automatically
+* Toll amount is deducted from the vehicle wallet
+
+### 4️⃣ On-Chain Recording
+
+Each transaction stores:
+
+* Hashed vehicle ID
+* Toll amount
+* Timestamp
+* Transaction hash
+
+All data is **immutable, verifiable, and privacy-safe**
+
+### 5️⃣ Verification & Settlement
+
+* Operators view payment status via dashboard
+* Users can access **cryptographic proof of payment**
+* Disputes are resolved instantly using on-chain history
+
+---
+
+## 🏗️ System Architecture
+
+```
+Vehicle Owner (Wallet)
+        │
+        ▼
+Mobile Web App (RFID Scan + UI)
+        │
+        ▼
+Ethereum Smart Contracts
+(TollPayment + Paymaster)
+        │
+        ├────────► Operator Dashboard
+        │
+        └────────► User Transaction Proofs
+```
+
+### Core Components
+
+#### 🧠 Smart Contracts (Solidity)
+
+* `TollPayment.sol`
+
+  * Escrows funds
+  * Deducts tolls
+  * Emits verifiable events
+
+* Paymaster Contract
+
+  * Sponsors gas fees
+  * Enables frictionless UX
+
+#### 🌐 Frontend
+
+* React (mobile-first)
+* Hosted directly on phones (mini-server approach)
+* RFID scanning + dashboards
+
+#### 🔐 Privacy Layer
+
+* Anonymous authentication (no PII on-chain)
+* Vehicle IDs hashed before storage
+
+---
+
+## ⚖️ Problems Solved
+
+### 🔒 Security & Fraud
+
+* Immutable ledger prevents double payments
+* Smart contracts eliminate tampering
+
+### 🕵️ Privacy
+
+* No tracking of personal identity
+* Anonymous, ZK-based authentication
+
+### ⚙️ Reliability
+
+* No centralized servers
+* No single point of failure
+
+### 🧾 Payment Proofs
+
+* Instant, verifiable transaction history
+* Simplified operator settlements
+
+---
+
+## 🚀 Key Features
+
+* ⚡ **Instant On-Chain Payments**
+* 🔒 **Trustless Smart Contract Escrow**
+* 👤 **Anonymous User Authentication**
+* ⛽ **Gasless User Experience (Paymaster)**
+* 📜 **Dispute-Proof Payment Records**
+* 📱 **Mobile-Based RFID Scanning**
+
+---
+
+## 🛠️ Tech Stack
+
+### Blockchain
+
+* Ethereum (Sepolia / Goerli)
+* Solidity Smart Contracts
+
+### Frontend
+
+* React
+* Tailwind CSS (White / Orange / Green)
+* Ethers.js / Web3.js
+
+### Infrastructure
+
+* CDP Paymaster
+* Mobile-hosted web server
+
+---
+
+## 🧪 Installation & Setup
+
+### 1️⃣ Smart Contracts
+
+```bash
+cd contracts
+npm install
+npx hardhat compile
+npx hardhat deploy --network sepolia
+```
+
+Update deployed contract address in frontend config.
+
+### 2️⃣ Frontend
+
+```bash
+cd frontend
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### 3️⃣ Mobile Hosting
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+* Run frontend directly from mobile device
+* Enable RFID scanning permissions
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🔮 Future Roadmap
 
-## What technologies are used for this project?
+* 🌉 Multi-chain wallet top-ups (Socket integration)
+* 🚘 FASTag interoperability
+* 🏙️ Smart city toll analytics
+* 🌍 Mainnet deployment
 
-This project is built with:
+---
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 👥 Team
 
-## How can I deploy this project?
+Built for Web3 infrastructure innovation.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+**Khushvinder Thakur** – Blockchain & Full Stack Developer
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+> _FlowPass — Moving payments as fast as trsmallToll

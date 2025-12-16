@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Shield, Scan, Zap, FileCheck } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
 const HeroSection = () => {
@@ -55,10 +56,12 @@ const HeroSection = () => {
           transition={{ duration: 0.5, delay: 0.3 }}
           className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
         >
-          <Button variant="hero" size="xl" className="w-full sm:w-auto">
-            <Scan className="w-5 h-5" />
-            Scan RFID Tag
-          </Button>
+          <Link to="/dashboard">
+            <Button variant="hero" size="xl" className="w-full sm:w-auto">
+              <Scan className="w-5 h-5" />
+              Scan RFID Tag
+            </Button>
+          </Link>
           <Button variant="outline" size="xl" className="w-full sm:w-auto">
             <Shield className="w-5 h-5" />
             Anonymous Login

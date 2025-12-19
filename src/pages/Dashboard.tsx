@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { 
   Wallet, 
   ArrowUpRight, 
@@ -13,27 +13,119 @@ import {
   Check,
   Plus,
   ExternalLink,
-  FileText
+  FileText,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import { useAccount, useBalance } from "wagmi";
+import { supabase } from "@/integrations/supabase/client";
+import { formatEther } from "viem";
+import { useAnonAadhaar } from "@/hooks/useAnonAadhaar";
 
-const recentTransactions = [
-  { id: "0x7f3a...8e21", toll: "Mumbai-Pune Expressway", amount: "₹85", time: "2 mins ago", type: "payment" },
-  { id: "0x9c4d...2f18", toll: "Delhi-Gurgaon Toll", amount: "₹45", time: "1 hour ago", type: "payment" },
-  { id: "0x1a2b...3c4d", toll: "Wallet Top-up", amount: "+₹500", time: "Yesterday", type: "deposit" },
-  { id: "0x2e8b...5d42", toll: "Bangalore-Mysore Exp.", amount: "₹120", time: "2 days ago", type: "payment" },
-];
+interface Transaction {
+  id: string;
+  wallet_address: string;
+  rfid_tag_id: string;
+  toll_booth_name: string;
+  amount_eth: number;
+  tx_hash: string;
+  status: string;
+  anon_aadhaar_verified: boolean;
+  created_at: string;
+}
 
 const Dashboard = () => {
   const [copied, setCopied] = useState(false);
-  const walletAddress = "0x742d...F8a9";
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  const { address, isConnected } = useAccount();
+  const { data: balance } = useBalance({ address });
+  const { isVerified } = useAnonAadhaar();
+
+  // Fetch transactions from database
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      if (!address) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('toll_transactions')
+        .select('*')
+        .eq('wallet_address', address)
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error('Error fetching transactions:', error);
+      } else {
+        setTransactions(data || []);
+      }
+      setLoading(false);
+    };
+
+    fetchTransactions();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel('toll-transactions')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'toll_transactions',
+          filter: `wallet_address=eq.${address}`,
+        },
+        (payload) => {
+          setTransactions((prev) => [payload.new as Transaction, ...prev].slice(0, 10));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [address]);
 
   const copyAddress = () => {
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (address) {
+      navigator.clipboard.writeText(address);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
+
+  const formatTimeAgo = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes} min ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    
+    const days = Math.floor(hours / 24);
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  };
+
+  const totalPaid = transactions.reduce((acc, tx) => acc + tx.amount_eth, 0);
+  const tripCount = transactions.length;
+
+  const displayAddress = address 
+    ? `${address.slice(0, 6)}...${address.slice(-4)}`
+    : 'Not Connected';
+
+  const displayBalance = balance 
+    ? `${parseFloat(formatEther(balance.value)).toFixed(4)} ${balance.symbol}`
+    : '0.0000 ETH';
 
   return (
     <div className="min-h-screen bg-background">
@@ -64,17 +156,19 @@ const Dashboard = () => {
                   <Wallet className="w-5 h-5 opacity-80" />
                   <span className="text-sm opacity-80">Available Balance</span>
                 </div>
-                <p className="text-4xl md:text-5xl font-bold mb-4">₹2,450.00</p>
+                <p className="text-3xl md:text-4xl font-bold mb-4">{displayBalance}</p>
                 <div className="flex items-center gap-2">
                   <code className="bg-primary-foreground/20 px-3 py-1.5 rounded-lg text-sm">
-                    {walletAddress}
+                    {displayAddress}
                   </code>
-                  <button 
-                    onClick={copyAddress}
-                    className="p-2 rounded-lg bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors"
-                  >
-                    {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  </button>
+                  {isConnected && (
+                    <button 
+                      onClick={copyAddress}
+                      className="p-2 rounded-lg bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors"
+                    >
+                      {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                    </button>
+                  )}
                 </div>
               </div>
               <div className="flex gap-3">
@@ -93,9 +187,9 @@ const Dashboard = () => {
           {/* Quick Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             {[
-              { label: "Total Paid", value: "₹12,850", icon: ArrowUpRight, color: "text-primary" },
-              { label: "Gas Saved", value: "₹342", icon: TrendingUp, color: "text-accent" },
-              { label: "Trips", value: "47", icon: History, color: "text-primary" },
+              { label: "Total Paid", value: `${totalPaid.toFixed(4)} ETH`, icon: ArrowUpRight, color: "text-primary" },
+              { label: "Gas Saved", value: "~0.01 ETH", icon: TrendingUp, color: "text-accent" },
+              { label: "Trips", value: tripCount.toString(), icon: History, color: "text-primary" },
               { label: "Disputes", value: "0", icon: Shield, color: "text-accent" },
             ].map((stat, i) => (
               <motion.div
@@ -128,44 +222,62 @@ const Dashboard = () => {
                 <Button variant="ghost" size="sm">View All</Button>
               </div>
               <div className="divide-y divide-border/50">
-                {recentTransactions.map((tx, i) => (
-                  <div key={i} className="p-4 hover:bg-secondary/30 transition-colors">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                          tx.type === "deposit" ? "bg-accent/10" : "bg-primary/10"
-                        }`}>
-                          {tx.type === "deposit" ? (
-                            <ArrowDownLeft className="w-5 h-5 text-accent" />
-                          ) : (
+                {loading ? (
+                  <div className="p-8 flex items-center justify-center">
+                    <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+                  </div>
+                ) : transactions.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <History className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                    <p>No transactions yet</p>
+                    <p className="text-sm mt-1">Scan an NFC tag to make your first toll payment</p>
+                  </div>
+                ) : (
+                  transactions.map((tx) => (
+                    <div key={tx.id} className="p-4 hover:bg-secondary/30 transition-colors">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl flex items-center justify-center bg-primary/10">
                             <ArrowUpRight className="w-5 h-5 text-primary" />
-                          )}
+                          </div>
+                          <div>
+                            <p className="font-medium">{tx.toll_booth_name}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <code>{tx.tx_hash?.slice(0, 10)}...{tx.tx_hash?.slice(-6)}</code>
+                              <span>•</span>
+                              <span>{formatTimeAgo(tx.created_at)}</span>
+                              {tx.anon_aadhaar_verified && (
+                                <>
+                                  <span>•</span>
+                                  <span className="text-accent">✓ Verified</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        <div>
-                          <p className="font-medium">{tx.toll}</p>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            <code>{tx.id}</code>
-                            <span>•</span>
-                            <span>{tx.time}</span>
+                        <div className="text-right">
+                          <p className="font-semibold">{tx.amount_eth} ETH</p>
+                          <div className="flex gap-1 mt-1">
+                            <a
+                              href={`/payment-proof?tx=${tx.tx_hash}`}
+                              className="p-1 rounded hover:bg-secondary"
+                            >
+                              <FileText className="w-3.5 h-3.5 text-muted-foreground" />
+                            </a>
+                            <a
+                              href={`https://sepolia.etherscan.io/tx/${tx.tx_hash}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="p-1 rounded hover:bg-secondary"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+                            </a>
                           </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <p className={`font-semibold ${tx.type === "deposit" ? "text-accent" : ""}`}>
-                          {tx.amount}
-                        </p>
-                        <div className="flex gap-1 mt-1">
-                          <button className="p-1 rounded hover:bg-secondary">
-                            <FileText className="w-3.5 h-3.5 text-muted-foreground" />
-                          </button>
-                          <button className="p-1 rounded hover:bg-secondary">
-                            <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-                          </button>
-                        </div>
-                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </motion.div>
 
@@ -179,18 +291,26 @@ const Dashboard = () => {
               {/* Anon Status */}
               <div className="bg-card rounded-2xl border border-border/50 p-5">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-accent/10 flex items-center justify-center">
-                    <Shield className="w-5 h-5 text-accent" />
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    isVerified ? 'bg-accent/10' : 'bg-secondary'
+                  }`}>
+                    <Shield className={`w-5 h-5 ${isVerified ? 'text-accent' : 'text-muted-foreground'}`} />
                   </div>
                   <div>
-                    <p className="font-semibold">Identity Verified</p>
-                    <p className="text-xs text-muted-foreground">Anon-Aadhaar Active</p>
+                    <p className="font-semibold">
+                      {isVerified ? 'Identity Verified' : 'Not Verified'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {isVerified ? 'Anon-Aadhaar Active' : 'Click Anon-Aadhaar in header'}
+                    </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-accent/5 border border-accent/20">
-                  <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
-                  <span className="text-sm text-accent">ZK Proof Valid</span>
-                </div>
+                {isVerified && (
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-accent/5 border border-accent/20">
+                    <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                    <span className="text-sm text-accent">ZK Proof Valid</span>
+                  </div>
+                )}
               </div>
 
               {/* Quick Actions */}
@@ -216,7 +336,7 @@ const Dashboard = () => {
               <div className="bg-gradient-to-br from-accent/10 to-accent/5 rounded-2xl border border-accent/20 p-5">
                 <h3 className="font-semibold mb-2">Gas-Free Payments</h3>
                 <p className="text-sm text-muted-foreground mb-3">
-                  You've saved ₹342 in gas fees this month with CDP Paymaster
+                  CDP Paymaster sponsors gas fees for all toll payments
                 </p>
                 <div className="h-2 bg-accent/20 rounded-full overflow-hidden">
                   <div className="h-full w-3/4 gradient-success rounded-full" />

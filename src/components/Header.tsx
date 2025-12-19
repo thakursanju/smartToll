@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Shield } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { WalletButton } from "@/components/WalletButton";
+import { AnonAadhaarButton } from "@/components/AnonAadhaarButton";
 
 const navLinks = [
   { label: "Features", href: "/#features" },
@@ -67,12 +69,8 @@ const Header = () => {
 
             {/* Desktop CTA */}
             <div className="hidden md:flex items-center gap-3">
-              <Button variant="ghost" size="sm">
-                Connect Wallet
-              </Button>
-              <Button variant="hero" size="sm">
-                Get Started
-              </Button>
+              <AnonAadhaarButton />
+              <WalletButton />
             </div>
 
             {/* Mobile menu button */}
@@ -121,14 +119,12 @@ const Header = () => {
                     )
                   ))}
                   <div className="pt-4 space-y-2">
-                    <Button variant="outline" size="lg" className="w-full">
-                      Connect Wallet
-                    </Button>
-                    <Link to="/dashboard">
-                      <Button variant="hero" size="lg" className="w-full">
-                        Get Started
-                      </Button>
-                    </Link>
+                    <div className="px-4">
+                      <AnonAadhaarButton />
+                    </div>
+                    <div className="px-4">
+                      <WalletButton />
+                    </div>
                   </div>
                 </div>
               </motion.div>

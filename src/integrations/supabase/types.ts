@@ -14,7 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      toll_transactions: {
+        Row: {
+          amount_eth: number
+          amount_wei: string
+          anon_aadhaar_verified: boolean | null
+          block_number: number | null
+          created_at: string
+          id: string
+          proof_ipfs_hash: string | null
+          rfid_tag_id: string
+          status: string
+          toll_booth_id: string
+          toll_booth_name: string
+          tx_hash: string | null
+          updated_at: string
+          wallet_address: string
+        }
+        Insert: {
+          amount_eth: number
+          amount_wei: string
+          anon_aadhaar_verified?: boolean | null
+          block_number?: number | null
+          created_at?: string
+          id?: string
+          proof_ipfs_hash?: string | null
+          rfid_tag_id: string
+          status?: string
+          toll_booth_id: string
+          toll_booth_name: string
+          tx_hash?: string | null
+          updated_at?: string
+          wallet_address: string
+        }
+        Update: {
+          amount_eth?: number
+          amount_wei?: string
+          anon_aadhaar_verified?: boolean | null
+          block_number?: number | null
+          created_at?: string
+          id?: string
+          proof_ipfs_hash?: string | null
+          rfid_tag_id?: string
+          status?: string
+          toll_booth_id?: string
+          toll_booth_name?: string
+          tx_hash?: string | null
+          updated_at?: string
+          wallet_address?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
